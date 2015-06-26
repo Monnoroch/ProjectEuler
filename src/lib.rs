@@ -151,3 +151,52 @@ mod task6 {
 		assert_eq!(square_sum_minus_sum_squares_up_to(100), 25164150);
 	}
 }
+
+mod task7 {
+	struct EratosfenPrimeGenerator {
+		primes: Vec<u64>,
+		current: u64,
+		inc: u64,
+	}
+
+	impl EratosfenPrimeGenerator {
+		fn new() -> EratosfenPrimeGenerator {
+			EratosfenPrimeGenerator{
+				primes: Vec::new(),
+				current: 2,
+				inc: 1,
+			}
+		}
+	}
+
+	impl Iterator for EratosfenPrimeGenerator {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			let res = self.current;
+			loop {
+				self.current += self.inc;
+				self.inc = 2;
+				if !self.primes.iter().any(|p| self.current % p == 0) {
+					self.primes.push(self.current);
+					break;
+				}
+			}
+			Some(res)
+		}
+	}
+
+	fn nth_prime(num: usize) -> u64 {
+		EratosfenPrimeGenerator::new().nth(num).unwrap()
+	}
+
+	fn nth_prime_from_one(num: usize) -> u64 {
+		nth_prime(num - 1)
+	}
+
+
+	#[test]
+	fn test() {
+		assert_eq!(nth_prime_from_one(10001), 104743);
+	}
+}
