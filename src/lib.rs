@@ -97,3 +97,39 @@ mod task4 {
 		assert_eq!(largest_palindrome_product(3), 906609);
 	}
 }
+
+mod task5 {
+	use std::cmp::max;
+	use std::collections::HashMap;
+	use task3;
+
+	fn factorize_map(num: u64) -> HashMap<u64, u64> {
+		let mut map = HashMap::new();
+		for f in task3::factorize(num) {
+			let counter = map.entry(f).or_insert(0);
+			*counter += 1;
+		}
+		map
+	}
+
+	fn smallest_multimle_of_all_up_to(num: u64) -> u64 {
+		let mut all_map: HashMap<u64, u32> = HashMap::new();
+		for i in (2..(num + 1)).rev() {
+			for (k, v) in &factorize_map(i) {
+				let counter = all_map.entry(*k).or_insert(*v as u32);
+				*counter = max(*v as u32, *counter);
+			}
+		}
+		let mut res = 1u64;
+		for (k, v) in &all_map {
+			res *= k.pow(*v);
+		}
+		res
+	}
+
+
+	#[test]
+	fn test() {
+		assert_eq!(smallest_multimle_of_all_up_to(20), 232792560);
+	}
+}
