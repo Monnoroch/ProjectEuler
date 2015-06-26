@@ -39,3 +39,29 @@ mod task2 {
 		assert_eq!(sum_even_fibs_below(4000000), 4613732);
 	}
 }
+
+mod task3 {
+	pub fn factorize(num: u64) -> Vec<u64> {
+		let mut n = num;
+		let mut factor = 2u64;
+		let mut factors = vec![];
+		while n > 1 && factor.pow(2) <= n {
+			while n % factor == 0 {
+				factors.push(factor);
+				n /= factor;
+			}
+			factor += 1;
+		}
+		factors.push(n);
+		factors
+	}
+
+	fn largest_factor(num: u64) -> u64 {
+		*factorize(num).iter().max().unwrap()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(largest_factor(600851475143), 6857);
+	}
+}
