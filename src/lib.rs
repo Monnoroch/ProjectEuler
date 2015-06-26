@@ -133,3 +133,21 @@ mod task5 {
 		assert_eq!(smallest_multimle_of_all_up_to(20), 232792560);
 	}
 }
+
+mod task6 {
+	fn square_sum_minus_sum_squares_up_to(num: u64) -> u64 {
+		let mut s = 0u64;
+		let mut ss = 0u64;
+		for x in 1..(num + 1) {
+			s += x.pow(2);
+			ss += x;
+		}
+		ss.pow(2) - s
+	}
+
+
+	#[test]
+	fn test() {
+		assert_eq!(square_sum_minus_sum_squares_up_to(100), 25164150);
+	}
+}
