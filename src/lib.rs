@@ -236,3 +236,25 @@ mod task8 {
 		);
 	}
 }
+
+mod task9 {
+	fn product_pithagorean_triples_when_sum_is_1000() -> u64 {
+		for a in 1..999 {
+			for b in 1..(999 - a) {
+				let sum = a + b;
+				let val = a*a + b*b;
+				for c in 1..999 { // will only make some iterations, so no need to optimize
+					if val == c * c && sum + c == 1000  {
+						return a * b * c;
+					}
+				}
+			}
+		}
+		unreachable!();
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(product_pithagorean_triples_when_sum_is_1000(), 31875000);
+	}
+}
