@@ -65,3 +65,35 @@ mod task3 {
 		assert_eq!(largest_factor(600851475143), 6857);
 	}
 }
+
+mod task4 {
+	fn is_palindrome(num: u64) -> bool {
+		let s = num.to_string().into_bytes();
+		let l = s.len();
+		for i in 0..l/2 {
+			if s[i] != s[l - i - 1] {
+				return false;
+			}
+		}
+		true
+	}
+
+	fn largest_palindrome_product(digits: u32) -> u64 {
+		let min = 10u64.pow(digits - 1);
+		let max = 10u64.pow(digits) - 1;
+		let mut res = vec![];
+		for i in (min..max).rev() {
+			for j in (min..max).rev() {
+				if is_palindrome(i * j) {
+					res.push(i * j);
+				}
+			}
+		}
+		*res.iter().max().unwrap()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(largest_palindrome_product(3), 906609);
+	}
+}
