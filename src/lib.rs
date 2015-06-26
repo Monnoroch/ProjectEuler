@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(step_by)]
 
 mod task1 {
 	fn sum_multiples_3_or_5_below(below: u64) -> u64 {
@@ -153,14 +154,14 @@ mod task6 {
 }
 
 mod task7 {
-	struct EratosfenPrimeGenerator {
+	pub struct EratosfenPrimeGenerator {
 		primes: Vec<u64>,
 		current: u64,
 		inc: u64,
 	}
 
 	impl EratosfenPrimeGenerator {
-		fn new() -> EratosfenPrimeGenerator {
+		pub fn new() -> EratosfenPrimeGenerator {
 			EratosfenPrimeGenerator{
 				primes: Vec::new(),
 				current: 2,
@@ -186,6 +187,56 @@ mod task7 {
 		}
 	}
 
+	pub struct EratosfenPrimeGeneratorBelowN {
+		primes: Vec<u64>,
+		cur: usize,
+	}
+
+	impl EratosfenPrimeGeneratorBelowN {
+		pub fn new(num: usize) -> EratosfenPrimeGeneratorBelowN {
+			let mut primes = Vec::new();
+			let mut numbers = Vec::with_capacity(num);
+			for _ in 0..num {
+				numbers.push(true);
+			}
+			for n in 2..num {
+				let mut stop = true;
+				for i in (n*2..num).step_by(n) {
+					// println!("numbers[{:?}] = false", i);
+					numbers[i] = false;
+					stop = false;
+				}
+				if stop {
+					break;
+				}
+			}
+			for (n, v) in numbers.iter().cloned().enumerate() {
+				if n >= 2 && v {
+					primes.push(n as u64);
+				}
+			}
+
+			EratosfenPrimeGeneratorBelowN{
+				primes: primes,
+				cur: 0,
+			}
+		}
+	}
+
+	impl Iterator for EratosfenPrimeGeneratorBelowN {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			let idx = self.cur;
+			self.cur += 1;
+			if idx >= self.primes.len() {
+				None
+			} else {
+				Some(self.primes[idx])
+			}
+		}
+	}
+
 	fn nth_prime(num: usize) -> u64 {
 		EratosfenPrimeGenerator::new().nth(num).unwrap()
 	}
@@ -194,6 +245,12 @@ mod task7 {
 		nth_prime(num - 1)
 	}
 
+	#[test]
+	fn test_primes() {
+		for (p1, p2) in EratosfenPrimeGenerator::new().zip(EratosfenPrimeGeneratorBelowN::new(100000)).take(1000) {
+			assert_eq!(p1, p2);
+		}
+	}
 
 	#[test]
 	fn test() {
@@ -256,5 +313,22 @@ mod task9 {
 	#[test]
 	fn test() {
 		assert_eq!(product_pithagorean_triples_when_sum_is_1000(), 31875000);
+	}
+}
+
+mod task10 {
+	use task7::EratosfenPrimeGeneratorBelowN;
+
+	fn sum_primes_below(num: usize) -> u64 {
+		let mut sum = 0;
+		for p in EratosfenPrimeGeneratorBelowN::new(num) {
+			sum += p;
+		}
+		sum
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(sum_primes_below(2000000), 142913828922);
 	}
 }
