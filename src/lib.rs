@@ -1,5 +1,6 @@
-#![allow(dead_code)]
 #![feature(step_by)]
+#![feature(collections)]
+#![allow(dead_code)]
 
 mod task1 {
 	fn sum_multiples_3_or_5_below(below: u64) -> u64 {
@@ -453,5 +454,55 @@ mod task11 {
 			),
 			70600674
 		);
+	}
+}
+
+mod task12 {
+	use std::collections::BitVec;
+	use std::collections::HashSet;
+	use task3::factorize;
+
+	fn inc(num: &mut BitVec) -> bool {
+		for i in 0..num.len() {
+			if num[i] {
+				num.set(i, false);
+			} else {
+				num.set(i, true);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	fn divisors_count(num: u64) -> usize {
+		let factors = factorize(num);
+		let mut bv = BitVec::from_elem(factors.len(), false);
+		let mut divisors = HashSet::new();
+		while inc(&mut bv) {
+			let mut product = 1;
+			for i in 0..bv.len() {
+				if bv[i] {
+					product *= factors[i];
+				}
+			}
+			divisors.insert(product);
+		}
+		divisors.len() + 2
+	}
+
+	fn first_triangle_over_n_divisors(num: usize) -> u64 {
+		let mut sum = 0;
+		for i in 1.. {
+			sum += i;
+			if divisors_count(sum) > num {
+				return sum;
+			}
+		}
+		unreachable!();
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(first_triangle_over_n_divisors(500), 76576500);
 	}
 }
