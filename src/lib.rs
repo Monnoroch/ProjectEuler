@@ -75,23 +75,46 @@ mod task2 {
 Factorize and find mazimum factor.
 */
 mod task3 {
-	pub fn factorize(num: u64) -> Vec<u64> {
-		let mut n = num;
-		let mut factor = 2u64;
-		let mut factors = vec![];
-		while n > 1 && factor.pow(2) <= n {
-			while n % factor == 0 {
-				factors.push(factor);
-				n /= factor;
+	pub struct Factors {
+		n: u64,
+		factor: u64,
+	}
+
+	impl Factors {
+		pub fn new(num: u64) -> Factors {
+			Factors{
+				n: num,
+				factor: 2,
 			}
-			factor += 1;
 		}
-		factors.push(n);
-		factors
+	}
+
+	impl Iterator for Factors {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			if self.n <= 1 {
+				return None;
+			}
+			loop {
+				if self.factor.pow(2) > self.n {
+					let res = self.n;
+					self.n = 1;
+					return Some(res);
+				}
+
+				if self.n % self.factor == 0 {
+					self.n /= self.factor;
+					return Some(self.factor);
+				} else {
+					self.factor += 1;
+				}
+			}
+		}
 	}
 
 	fn largest_factor(num: u64) -> u64 {
-		*factorize(num).iter().max().unwrap()
+		Factors::new(num).max().unwrap()
 	}
 
 	#[test]
@@ -145,7 +168,7 @@ mod task5 {
 
 	fn factorize_map(num: u64) -> HashMap<u64, u64> {
 		let mut map = HashMap::new();
-		for f in task3::factorize(num) {
+		for f in task3::Factors::new(num) {
 			let counter = map.entry(f).or_insert(0);
 			*counter += 1;
 		}
@@ -521,7 +544,7 @@ Count different via HashSet.
 mod task12 {
 	use std::collections::BitVec;
 	use std::collections::HashSet;
-	use task3::factorize;
+	use task3::Factors;
 
 	fn inc(num: &mut BitVec) -> bool {
 		for i in 0..num.len() {
@@ -536,7 +559,7 @@ mod task12 {
 	}
 
 	fn divisors_count(num: u64) -> usize {
-		let factors = factorize(num);
+		let factors = Factors::new(num).collect::<Vec<_>>();
 		let mut bv = BitVec::from_elem(factors.len(), false);
 		let mut divisors = HashSet::new();
 		while inc(&mut bv) {
