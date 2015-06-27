@@ -783,3 +783,123 @@ mod task14 {
 		assert_eq!(longest_collatz_start(1000000), 837799);
 	}
 }
+
+/*
+At each state we can either turn right or down.
+Each possipility defines new way.
+We can't turn right or down more times than the size of the grid.
+After that, we just need to count, how many times we finished: did N right and N down steps.
+
+Optimizations:
+1. Note, that if only one of rights or downs is already N, then we can just say, that from now on there is only one possible path.
+2. If rights == downs, then there is a symmetry, so we can compute only one variand, and multiply by two.
+3. We come to a particular position from many paths, so we can cache the result for the position.
+*/
+mod task15 {
+	use std::collections::HashMap;
+
+	#[derive(PartialEq, Eq, Hash)]
+	struct State {
+		rights: usize,
+		downs: usize,
+	}
+
+	fn count_lattice_paths_impl(dim: usize, state: State) -> usize {
+		let mut res = 0;
+		if state.rights < dim {
+			res += count_lattice_paths_impl(dim, State{
+				rights: state.rights + 1,
+				downs: state.downs,
+			})
+		}
+		if state.downs < dim {
+			res += count_lattice_paths_impl(dim, State{
+				rights: state.rights,
+				downs: state.downs + 1,
+			})
+		}
+
+		if state.rights >= dim && state.downs >= dim {
+			res = 1;
+		}
+		res
+	}
+
+	fn count_lattice_paths_impl_fast(dim: usize, state: State) -> usize {
+		if state.rights < dim && state.downs < dim {
+			count_lattice_paths_impl_fast(dim, State{
+				rights: state.rights + 1,
+				downs: state.downs,
+			}) + count_lattice_paths_impl_fast(dim, State{
+				rights: state.rights,
+				downs: state.downs + 1,
+			})
+		} else {
+			1
+		}
+	}
+
+	fn count_lattice_paths_impl_very_fast(dim: usize, state: State) -> usize {
+		if state.rights < dim && state.downs < dim {
+			if state.rights == state.downs {
+				2 * count_lattice_paths_impl_very_fast(dim, State{
+					rights: state.rights + 1,
+					downs: state.downs,
+				})
+			} else {
+				count_lattice_paths_impl_very_fast(dim, State{
+					rights: state.rights + 1,
+					downs: state.downs,
+				}) + count_lattice_paths_impl_very_fast(dim, State{
+					rights: state.rights,
+					downs: state.downs + 1,
+				})
+			}
+		} else {
+			1
+		}
+	}
+
+	fn count_lattice_paths_impl_very_fast_cache(dim: usize, state: State, cache: &mut HashMap<State, usize>) -> usize {
+		match cache.get(&state) {
+			Some(count) => { return *count; },
+			None => {},
+		};
+
+		let res = if state.rights < dim && state.downs < dim {
+			if state.rights == state.downs {
+				2 * count_lattice_paths_impl_very_fast_cache(dim, State{
+					rights: state.rights + 1,
+					downs: state.downs,
+				}, cache)
+			} else {
+				let r1 = count_lattice_paths_impl_very_fast_cache(dim, State{
+					rights: state.rights + 1,
+					downs: state.downs,
+				}, cache);
+
+				r1 + count_lattice_paths_impl_very_fast_cache(dim, State{
+					rights: state.rights,
+					downs: state.downs + 1,
+				}, cache)
+			}
+		} else {
+			1
+		};
+		cache.insert(state, res);
+		res
+	}
+
+	fn count_lattice_paths(dim: usize) -> usize {
+		let mut cache = HashMap::new();
+		count_lattice_paths_impl_very_fast_cache(dim, State{
+			rights: 0,
+			downs: 0,
+		}, &mut cache)
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(count_lattice_paths(20), 137846528820);
+	}
+}
