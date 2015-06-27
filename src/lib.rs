@@ -2,6 +2,9 @@
 #![feature(collections)]
 #![allow(dead_code)]
 
+/*
+Just a simple loop with divisibility checks and summing.
+*/
 mod task1 {
 	fn sum_multiples_3_or_5_below(below: u64) -> u64 {
 		let mut s = 0;
@@ -19,6 +22,9 @@ mod task1 {
 	}
 }
 
+/*
+Implemented with fibonacci sequence iterator and simple loop with checks and summing.
+*/
 mod task2 {
 	struct FibonacciSequence {
 		v1: u64,
@@ -65,6 +71,9 @@ mod task2 {
 	}
 }
 
+/*
+Factorize and find mazimum factor.
+*/
 mod task3 {
 	pub fn factorize(num: u64) -> Vec<u64> {
 		let mut n = num;
@@ -91,6 +100,9 @@ mod task3 {
 	}
 }
 
+/*
+Iterate over all pairs of numbers and check if their product is a palindrome.
+*/
 mod task4 {
 	fn is_palindrome(num: u64) -> bool {
 		let s = num.to_string().into_bytes();
@@ -123,6 +135,9 @@ mod task4 {
 	}
 }
 
+/*
+Factorize add divisors, and then multiply them all.
+*/
 mod task5 {
 	use std::cmp::max;
 	use std::collections::HashMap;
@@ -159,6 +174,9 @@ mod task5 {
 	}
 }
 
+/*
+Simple loop with summing.
+*/
 mod task6 {
 	fn square_sum_minus_sum_squares_up_to(num: u64) -> u64 {
 		let mut s = 0u64;
@@ -177,6 +195,9 @@ mod task6 {
 	}
 }
 
+/*
+Implemented with eratosfen iterator (optionally eratosfen up to N iterator).
+*/
 mod task7 {
 	pub struct EratosfenPrimeGenerator {
 		primes: Vec<u64>,
@@ -282,6 +303,9 @@ mod task7 {
 	}
 }
 
+/*
+Calculate all products, find maximum.
+*/
 mod task8 {
 	use std::cmp::max;
 
@@ -318,6 +342,9 @@ mod task8 {
 	}
 }
 
+/*
+Iterate all triples with given sum, find product.
+*/
 mod task9 {
 	fn product_pithagorean_triples_when_sum_is_1000() -> u64 {
 		for a in 1..999 {
@@ -340,6 +367,10 @@ mod task9 {
 	}
 }
 
+/*
+Implemented with eratosfen up to N iterator.
+Infinet eratosfen iteratir is too slow for that problem.
+*/
 mod task10 {
 	use task7::EratosfenPrimeGeneratorBelowN;
 
@@ -357,6 +388,9 @@ mod task10 {
 	}
 }
 
+/*
+Just walk in all directions, calculate all products, fins maximum.
+*/
 mod task11 {
 	use std::cmp::max;
 
@@ -480,6 +514,10 @@ mod task11 {
 	}
 }
 
+/*
+Factorize each triangle number, iterate all subsets of factors, find products of those subsets, these would be divisors.
+Count different via HashSet.
+*/
 mod task12 {
 	use std::collections::BitVec;
 	use std::collections::HashSet;
@@ -664,6 +702,9 @@ mod task13 {
 	}
 }
 
+/*
+Implemented with collatz sequence iterator and a simple loop.
+*/
 mod task14 {
 	struct CollatzSequence {
 		current: u64,
