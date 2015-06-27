@@ -20,20 +20,43 @@ mod task1 {
 }
 
 mod task2 {
-	fn sum_even_fibs_below(below: u64) -> u64 {
-		let mut s = 0;
-		let mut v1;
-		let mut v2 = 1;
-		let mut val = 1;
-		while val <= below {
-			if val % 2 == 0 {
-				s += val;
+	struct FibonacciSequence {
+		v1: u64,
+		v2: u64,
+	}
+
+	impl FibonacciSequence {
+		fn new() -> FibonacciSequence {
+			FibonacciSequence{
+				v1: 0,
+				v2: 1,
 			}
-			v1 = v2;
-			v2 = val;
-			val = v1 + v2;
 		}
-		s
+	}
+
+	impl Iterator for FibonacciSequence {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			let res = self.v2 + self.v1;
+			self.v1 = self.v2;
+			self.v2 = res;
+			Some(res)
+		}
+	}
+
+	fn sum_even_fibs_below(below: u64) -> u64 {
+		let mut sum = 0;
+		for v in FibonacciSequence::new() {
+			if v > below {
+				break;
+			}
+
+			if v % 2 == 0 {
+				sum += v;
+			}
+		}
+		sum
 	}
 
 	#[test]
