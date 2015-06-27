@@ -640,3 +640,59 @@ mod task13 {
 		);
 	}
 }
+
+mod task14 {
+	struct CollatzSequence {
+		current: u64,
+		stop: bool,
+	}
+
+	impl CollatzSequence {
+		fn from(start: u64) -> CollatzSequence {
+			CollatzSequence{
+				current: start,
+				stop: false,
+			}
+		}
+	}
+
+	impl Iterator for CollatzSequence {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			if self.stop {
+				return None;
+			}
+
+			let res = self.current;
+			if res % 2 == 0 {
+				self.current /= 2;
+			} else {
+				if res == 1 {
+					self.stop = true;
+				} else {
+					self.current = res * 3 + 1;
+				}
+			}
+			Some(res)
+		}
+	}
+
+	fn longest_collatz_start(below: u64) -> u64 {
+		let mut max_val = 0;
+		let mut max_cnt = 0;
+		for i in 2..below {
+			let cnt = CollatzSequence::from(i).count();
+			if cnt > max_cnt {
+				max_cnt = cnt;
+				max_val = i;
+			}
+		}
+		max_val
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(longest_collatz_start(1000000), 837799);
+	}
+}
