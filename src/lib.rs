@@ -1,5 +1,6 @@
 #![feature(step_by)]
 #![feature(collections)]
+#![feature(core)]
 #![allow(dead_code)]
 
 /*
@@ -923,5 +924,126 @@ mod task16 {
 			sum_digits("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376"),
 			1366
 		);
+	}
+}
+
+/*
+Convert numbers to string, count letters, sum.
+*/
+mod task17 {
+	fn number_to_string(num: u64) -> String {
+		if num > 1000 {
+			panic!("Too big number!");
+		}
+		if num == 1000 {
+			return "one thousand".to_string();
+		}
+		if num == 0 {
+			return "zero".to_string();
+		}
+
+		let mut names = Vec::new();
+		let mut n = num;
+
+		if n / 100 != 0 {
+			names.push(match n / 100 {
+				1 => "one",
+				2 => "two",
+				3 => "three",
+				4 => "four",
+				5 => "five",
+				6 => "six",
+				7 => "seven",
+				8 => "eight",
+				9 => "nine",
+				_ => { unreachable!() },
+			});
+			names.push("hundred");
+			n = n % 100;
+			if n != 0 {
+				names.push("and");
+			}
+		}
+
+		if n / 10 > 1 {
+			names.push(match n / 10 {
+				2 => "twenty",
+				3 => "thirty",
+				4 => "forty",
+				5 => "fifty",
+				6 => "sixty",
+				7 => "seventy",
+				8 => "eighty",
+				9 => "ninety",
+				_ => { unreachable!() },
+			});
+			n = n % 10;
+			if n != 0 {
+				names.push(match n {
+					1 => "one",
+					2 => "two",
+					3 => "three",
+					4 => "four",
+					5 => "five",
+					6 => "six",
+					7 => "seven",
+					8 => "eight",
+					9 => "nine",
+					_ => { unreachable!() },
+				});
+			}
+		} else if n / 10 == 1 {
+			n = n % 10;
+			names.push(match n {
+				0 => "ten",
+				1 => "eleven",
+				2 => "twelve",
+				3 => "thirteen",
+				4 => "fourteen",
+				5 => "fifteen",
+				6 => "sixteen",
+				7 => "seventeen",
+				8 => "eighteen",
+				9 => "nineteen",
+				_ => { unreachable!() },
+			});
+		} else if n != 0 {
+			n = n % 10;
+			names.push(match n {
+				1 => "one",
+				2 => "two",
+				3 => "three",
+				4 => "four",
+				5 => "five",
+				6 => "six",
+				7 => "seven",
+				8 => "eight",
+				9 => "nine",
+				_ => { unreachable!() },
+			});
+		}
+
+		names.iter().fold(String::new(), |aggr, val| {
+			let mut res = aggr.clone();
+			res.push_str(" ");
+			res.push_str(*val);
+			res
+		})
+	}
+
+	fn count_string_number_len(num: u64) -> usize {
+		number_to_string(num)
+			.chars()
+			.filter(|c| *c != ' ')
+			.count()
+	}
+
+	fn count_string_numbers_sum_len(from: u64, to: u64) -> usize {
+		(from..(to + 1)).map(count_string_number_len).sum()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(count_string_numbers_sum_len(1, 1000), 21124);
 	}
 }
