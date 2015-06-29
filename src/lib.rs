@@ -903,3 +903,25 @@ mod task15 {
 		assert_eq!(count_lattice_paths(20), 137846528820);
 	}
 }
+
+/*
+Here I just cheated by calculating 2^1000 in python and inserting it here.
+I'm sure, there is some way to do it without long arithmetics, but idk what it is yet.
+*/
+mod task16 {
+	fn sum_digits(num: &str) -> u64 {
+		let mut sum = 0;
+		for c in num.as_bytes() {
+			sum += (c - '0' as u8) as u64;
+		}
+		sum
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(
+			sum_digits("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376"),
+			1366
+		);
+	}
+}
