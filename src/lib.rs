@@ -1,7 +1,11 @@
 #![feature(step_by)]
 #![feature(collections)]
 #![feature(core)]
+#![feature(convert)]
 #![allow(dead_code)]
+#![allow(unused_features)]
+
+extern crate num;
 
 /*
 Just a simple loop with divisibility checks and summing.
@@ -935,10 +939,21 @@ mod task15 {
 }
 
 /*
-Here I just cheated by calculating 2^1000 in python and inserting it here.
-I'm sure, there is some way to do it without long arithmetics, but idk what it is yet.
+Calculate result using big uint.
 */
 mod task16 {
+	use num::traits::FromPrimitive;
+	use num::bigint::BigUint;
+
+	fn pow(num: u64, pow: u64) -> BigUint {
+		let n = <BigUint as FromPrimitive>::from_u64(num).unwrap();
+		let mut res = n.clone();
+		for _ in 1..pow {
+			res = res * &n;
+		}
+		res
+	}
+
 	pub fn sum_digits(num: &str) -> u64 {
 		let mut sum = 0;
 		for c in num.as_bytes() {
@@ -949,10 +964,7 @@ mod task16 {
 
 	#[test]
 	fn test() {
-		assert_eq!(
-			sum_digits("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376"),
-			1366
-		);
+		assert_eq!(sum_digits(pow(2, 1000).to_string().as_str()), 1366);
 	}
 }
 
@@ -1281,19 +1293,27 @@ mod task19 {
 }
 
 /*
-And here again I cheated, being too lazy to implement long arithmetics and calculated the factorial using python.
+Calculate result using big uint.
 */
 mod task20 {
+	use num::traits::One;
+	use num::traits::FromPrimitive;
+	use num::bigint::BigUint;
 	#[allow(unused_imports)]
 	use task16::sum_digits;
 
+	fn factorial(num: u64) -> BigUint {
+		let mut fact = <BigUint as One>::one();
+		for i in 2..num {
+			fact = fact * <BigUint as FromPrimitive>::from_u64(i).unwrap();
+		}
+		fact
+	}
+
 	#[test]
 	fn test() {
-		assert_eq!(sum_digits("3628800"), 27);
-		assert_eq!(
-			sum_digits("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000"),
-			648
-		);
+		assert_eq!(sum_digits(factorial(10).to_string().as_str()), 27);
+		assert_eq!(sum_digits(factorial(100).to_string().as_str()), 648);
 	}
 }
 
