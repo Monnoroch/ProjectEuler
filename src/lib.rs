@@ -1415,3 +1415,60 @@ mod task22 {
 		);
 	}
 }
+
+/*
+Implemented abundant numbers iterator.
+Initially every number can't be sum of two abundant numbers,
+then we iterate for all pairs of abundant numbers and say, that their sum can. Now, what's left -- can't, so we sum it.
+*/
+mod task23 {
+	use task12::Divisors;
+
+	pub struct AbundantNumbers {
+		current: u64,
+	}
+
+	impl AbundantNumbers {
+		pub fn new() -> AbundantNumbers {
+			AbundantNumbers{
+				current: 12,
+			}
+		}
+	}
+
+	impl Iterator for AbundantNumbers {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			let res = self.current;
+			self.current += 1;
+			while Divisors::new(self.current).sum::<u64>() - self.current <= self.current {
+				self.current += 1;
+			}
+			Some(res)
+		}
+	}
+
+	fn sum_of_all_numbers_that_are_not_a_sum_of_two_abundant_numbers() -> u64 {
+		let abundant = AbundantNumbers::new().take_while(|n| *n < 28122).collect::<Vec<_>>();
+		let mut numbers = (0..28123).map(|_| false).collect::<Vec<_>>();
+		let len = numbers.len();
+		for i in abundant.iter().cloned() {
+			for j in abundant.iter().cloned().take_while(|n| *n < len as u64 - i) {
+				numbers[(i + j) as usize] = true;
+			}
+		}
+
+		numbers
+			.iter()
+			.enumerate()
+			.filter(|&(_, f)| !f)
+			.map(|(n, _)| n as u64)
+			.sum::<u64>()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(sum_of_all_numbers_that_are_not_a_sum_of_two_abundant_numbers(), 4179871);
+	}
+}
