@@ -1047,3 +1047,206 @@ mod task17 {
 		assert_eq!(count_string_numbers_sum_len(1, 1000), 21124);
 	}
 }
+
+/*
+Just do the recursive summing and maxing.
+Implemented an optimized DP wersion with cache.
+*/
+mod task18 {
+	use std::str::FromStr;
+	use std::cmp::max;
+	use std::collections::HashMap;
+
+	fn parse_triangle(data: &str) -> Vec<Vec<u64>> {
+		let mut res = Vec::new();
+		for line in data.lines() {
+			let mut v = Vec::new();
+			for word in line.split_whitespace() {
+				v.push(<u64 as FromStr>::from_str(word).ok().unwrap());
+			}
+			res.push(v);
+		}
+		res
+	}
+
+	fn largest_path_sum_impl(triangle: &Vec<Vec<u64>>, row: usize, column: usize) -> u64 {
+		let num = triangle[row][column];
+		if row == triangle.len() - 1 {
+			num
+		} else {
+			num + max(largest_path_sum_impl(triangle, row + 1, column), largest_path_sum_impl(triangle, row + 1, column + 1))
+		}
+	}
+
+	#[derive(PartialEq, Eq, Hash)]
+	struct State {
+		row: usize,
+		column: usize,
+	}
+
+	fn largest_path_sum_impl_cache(triangle: &Vec<Vec<u64>>, state: State, cache: &mut HashMap<State, u64>) -> u64 {
+		let num = triangle[state.row][state.column];
+		if state.row == triangle.len() - 1 {
+			num
+		} else {
+			match cache.get(&state) {
+				Some(val) => { return *val; },
+				None => {},
+			};
+
+			let res = num + max(
+				largest_path_sum_impl_cache(triangle, State{
+					row: state.row + 1,
+					column: state.column,
+				}, cache),
+				largest_path_sum_impl_cache(triangle, State{
+					row: state.row + 1,
+					column: state.column + 1,
+				}, cache)
+			);
+			cache.insert(state, res);
+			res
+		}
+	}
+
+	fn largest_path_sum(triangle: &Vec<Vec<u64>>) -> u64 {
+		let mut cache = HashMap::new();
+		largest_path_sum_impl_cache(triangle, State{
+			row: 0,
+			column: 0,
+		}, &mut cache)
+	}
+
+	pub fn largest_path_sum_str(s: &str) -> u64 {
+		largest_path_sum(&parse_triangle(s))
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(largest_path_sum_str("3\n7 4\n2 4 6\n8 5 9 3"), 23);
+		assert_eq!(largest_path_sum_str(
+"75
+95 64
+17 47 82
+18 35 87 10
+20 04 82 47 65
+19 01 23 75 03 34
+88 02 77 73 07 63 67
+99 65 04 28 06 16 70 92
+41 41 26 56 83 40 80 70 33
+41 48 72 33 47 32 37 16 94 29
+53 71 44 65 25 43 91 52 97 51 14
+70 11 33 28 77 73 17 78 39 68 17 57
+91 71 52 38 17 14 91 43 58 50 27 29 48
+63 66 04 68 89 53 67 30 73 16 69 87 40 31
+04 62 98 27 23 09 70 98 73 93 38 53 60 04 23"
+			),
+			1074
+		);
+	}
+}
+
+/*
+Iterate over dates from 1900.1.1 to start date to find which day of the week is a start date,
+and than iterate from start date to end date, incrementing day of the week and counting appropriate sundays.
+*/
+mod task19 {
+	#[derive(Clone, Copy)]
+	pub struct Date {
+		year: u32,
+		month: u8,
+		day: u8,
+	}
+
+	impl Date {
+		pub fn new(year: u32, month: u8, day: u8) -> Date {
+			Date{
+				year: year,
+				month: month,
+				day: day,
+			}
+		}
+	}
+
+	pub struct Dates {
+		current: Date,
+		to: Date,
+	}
+
+	impl Dates {
+		pub fn new(from: Date, to: Date) -> Dates {
+			Dates{
+				current: from,
+				to: to,
+			}
+		}
+
+		pub fn max_days(year: u32, month: u8) -> u8 {
+			match month {
+				4 | 6 | 9 | 11 => 30,
+				2 => {
+					if year % 4 == 0 && (year % 100 != 0 || year % 400 == 0) {
+						29
+					} else {
+						28
+					}
+				},
+				1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+				_ => unreachable!(),
+			}
+		}
+	}
+
+	impl Iterator for Dates {
+		type Item = Date;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			let res = self.current;
+			if res.year < self.to.year ||
+			   (res.year == self.to.year && res.month < self.to.month) ||
+			   (res.year == self.to.year && res.month == self.to.month && res.day < self.to.day)
+			{
+				self.current.day += 1;
+				if self.current.day > Dates::max_days(self.current.year, self.current.month) {
+					self.current.day = 1;
+					self.current.month += 1;
+					if self.current.month > 12 {
+						self.current.month = 1;
+						self.current.year += 1;
+					}
+				}
+				Some(res)
+			} else {
+				None
+			}
+		}
+	}
+
+	fn count_sundays(from: Date, to: Date) -> usize {
+		let mut day_of_week = 1;
+		for _ in Dates::new(Date::new(1900, 1, 1), from) {
+			day_of_week += 1;
+			if day_of_week > 7 {
+				day_of_week = 1;
+			}
+		}
+
+		let mut count = 0usize;
+		for d in Dates::new(from, to) {
+			if day_of_week == 7 && d.day == 1 {
+				count += 1;
+			}
+
+			day_of_week += 1;
+			if day_of_week > 7 {
+				day_of_week = 1;
+			}
+		}
+		count
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(count_sundays(Date::new(1901, 1, 1), Date::new(2001, 1, 1)), 171);
+	}
+}
