@@ -562,7 +562,7 @@ mod task12 {
 				factors: fs,
 				state: BitVec::from_elem(len, false),
 				cache: HashSet::new(),
-				stop: false,
+				stop: num == 0,
 			}
 		}
 
@@ -1294,5 +1294,69 @@ mod task20 {
 			sum_digits("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000"),
 			648
 		);
+	}
+}
+
+/*
+Implemented amicable number pairs iterator, then just loop and sum.
+*/
+mod task21 {
+	use task12::Divisors;
+
+	struct AmicableNumbers {
+		i: u64,
+		j: u64,
+		to: u64,
+		sums: Vec<u64>,
+	}
+
+	impl AmicableNumbers {
+		pub fn new(to: u64) -> AmicableNumbers {
+			AmicableNumbers{
+				i: 0,
+				j: 1,
+				to: to,
+				sums: (0..to).map(Self::sum_divisors).collect::<Vec<_>>(),
+			}
+		}
+
+		fn sum_divisors(num: u64) -> u64 {
+			Divisors::new(num).sum::<u64>() - num
+		}
+	}
+
+	impl Iterator for AmicableNumbers {
+		type Item = (u64, u64);
+
+		fn next(&mut self) -> Option<Self::Item> {
+			while self.i < self.to && self.j < self.to {
+				let i = self.i;
+				let j = self.j;
+				let ok = i == self.sums[j as usize] && j == self.sums[i as usize];
+
+				self.j += 1;
+				if self.j == self.to {
+					self.i += 1;
+					self.j = self.i + 1;
+				}
+				if ok {
+					return Some((i, j));
+				}
+			}
+			None
+		}
+	}
+
+	fn sum_amicable_numbers_under(max: u64) -> u64 {
+		let mut sum = 0;
+		for (i, j) in AmicableNumbers::new(max + 1) {
+			sum += i + j;
+		}
+		sum
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(sum_amicable_numbers_under(10000), 31626);
 	}
 }
