@@ -910,7 +910,7 @@ Here I just cheated by calculating 2^1000 in python and inserting it here.
 I'm sure, there is some way to do it without long arithmetics, but idk what it is yet.
 */
 mod task16 {
-	fn sum_digits(num: &str) -> u64 {
+	pub fn sum_digits(num: &str) -> u64 {
 		let mut sum = 0;
 		for c in num.as_bytes() {
 			sum += (c - '0' as u8) as u64;
@@ -1248,5 +1248,22 @@ mod task19 {
 	#[test]
 	fn test() {
 		assert_eq!(count_sundays(Date::new(1901, 1, 1), Date::new(2001, 1, 1)), 171);
+	}
+}
+
+/*
+And here again I cheated, being too lazy to implement long arithmetics and calculated the factorial using python.
+*/
+mod task20 {
+	#[allow(unused_imports)]
+	use task16::sum_digits;
+
+	#[test]
+	fn test() {
+		assert_eq!(sum_digits("3628800"), 27);
+		assert_eq!(
+			sum_digits("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000"),
+			648
+		);
 	}
 }
