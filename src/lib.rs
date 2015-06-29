@@ -547,39 +547,68 @@ mod task12 {
 	use std::collections::HashSet;
 	use task3::Factors;
 
-	fn inc(num: &mut BitVec) -> bool {
-		for i in 0..num.len() {
-			if num[i] {
-				num.set(i, false);
-			} else {
-				num.set(i, true);
-				return true;
-			}
-		}
-		return false;
+	pub struct Divisors {
+		factors: Vec<u64>,
+		state: BitVec,
+		cache: HashSet<u64>,
+		stop: bool,
 	}
 
-	fn divisors_count(num: u64) -> usize {
-		let factors = Factors::new(num).collect::<Vec<_>>();
-		let mut bv = BitVec::from_elem(factors.len(), false);
-		let mut divisors = HashSet::new();
-		while inc(&mut bv) {
-			let mut product = 1;
-			for i in 0..bv.len() {
-				if bv[i] {
-					product *= factors[i];
+	impl Divisors {
+		pub fn new(num: u64) -> Divisors {
+			let fs = Factors::new(num).collect::<Vec<_>>();
+			let len = fs.len();
+			Divisors{
+				factors: fs,
+				state: BitVec::from_elem(len, false),
+				cache: HashSet::new(),
+				stop: false,
+			}
+		}
+
+		fn inc(&mut self) -> bool {
+			for i in 0..self.state.len() {
+				if self.state[i] {
+					self.state.set(i, false);
+				} else {
+					self.state.set(i, true);
+					return true;
 				}
 			}
-			divisors.insert(product);
+			return false;
 		}
-		divisors.len() + 2
+	}
+
+	impl Iterator for Divisors {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			if self.stop {
+				return None;
+			}
+
+			while self.inc() {
+				let mut product = 1;
+				for (b, f) in self.state.iter().zip(self.factors.iter().cloned()) {
+					if b {
+						product *= f;
+					}
+				}
+				if !self.cache.contains(&product) {
+					self.cache.insert(product);
+					return Some(product);
+				}
+			}
+			self.stop = true;
+			Some(1)
+		}
 	}
 
 	fn first_triangle_over_n_divisors(num: usize) -> u64 {
 		let mut sum = 0;
 		for i in 1.. {
 			sum += i;
-			if divisors_count(sum) > num {
+			if Divisors::new(sum).count() > num {
 				return sum;
 			}
 		}
