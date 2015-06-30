@@ -12,13 +12,9 @@ Just a simple loop with divisibility checks and summing.
 */
 mod task1 {
 	fn sum_multiples_3_or_5_below(below: u64) -> u64 {
-		let mut s = 0;
-		for i in 1..below {
-			if i % 5 == 0 || i % 3 == 0 {
-				s += i;
-			}
-		}
-		s
+		(1..below)
+			.filter(|n| n % 5 == 0 || n % 3 == 0)
+			.sum::<u64>()
 	}
 
 	#[test]
@@ -60,17 +56,10 @@ mod task2 {
 	}
 
 	fn sum_even_fibs_below(below: u64) -> u64 {
-		let mut sum = 0;
-		for v in FibonacciSequence::<u64>::new() {
-			if v > below {
-				break;
-			}
-
-			if v % 2 == 0 {
-				sum += v;
-			}
-		}
-		sum
+		FibonacciSequence::<u64>::new()
+			.take_while(|v| *v <= below)
+			.filter(|v| v % 2 == 0)
+			.sum::<u64>()
 	}
 
 	#[test]
@@ -105,7 +94,7 @@ mod task3 {
 				return None;
 			}
 			loop {
-				if self.factor.pow(2) > self.n {
+				if self.factor * self.factor > self.n {
 					let res = self.n;
 					self.n = 1;
 					return Some(res);
@@ -122,7 +111,9 @@ mod task3 {
 	}
 
 	fn largest_factor(num: u64) -> u64 {
-		Factors::new(num).max().unwrap()
+		Factors::new(num)
+			.max()
+			.unwrap()
 	}
 
 	#[test]
@@ -157,7 +148,10 @@ mod task4 {
 				}
 			}
 		}
-		*res.iter().max().unwrap()
+		*res
+			.iter()
+			.max()
+			.unwrap()
 	}
 
 	#[test]
@@ -191,11 +185,10 @@ mod task5 {
 				*counter = max(*v as u32, *counter);
 			}
 		}
-		let mut res = 1u64;
-		for (k, v) in &all_map {
-			res *= k.pow(*v);
-		}
-		res
+		all_map
+			.iter()
+			.map(|(k, v)| k.pow(*v))
+			.product::<u64>()
 	}
 
 
@@ -213,10 +206,10 @@ mod task6 {
 		let mut s = 0u64;
 		let mut ss = 0u64;
 		for x in 1..(num + 1) {
-			s += x.pow(2);
+			s += x * x;
 			ss += x;
 		}
-		ss.pow(2) - s
+		ss * ss - s
 	}
 
 
@@ -270,15 +263,10 @@ mod task7 {
 
 	impl EratosfenPrimeGeneratorBelowN {
 		pub fn new(num: usize) -> EratosfenPrimeGeneratorBelowN {
-			let mut primes = Vec::new();
-			let mut numbers = Vec::with_capacity(num);
-			for _ in 0..num {
-				numbers.push(true);
-			}
+			let mut numbers = (0..num).map(|_| true).collect::<Vec<_>>();
 			for n in 2..num {
 				let mut stop = true;
 				for i in (n*2..num).step_by(n) {
-					// println!("numbers[{:?}] = false", i);
 					numbers[i] = false;
 					stop = false;
 				}
@@ -286,14 +274,14 @@ mod task7 {
 					break;
 				}
 			}
-			for (n, v) in numbers.iter().cloned().enumerate() {
-				if n >= 2 && v {
-					primes.push(n as u64);
-				}
-			}
-
 			EratosfenPrimeGeneratorBelowN{
-				primes: primes,
+				primes: numbers
+					.iter()
+					.cloned()
+					.enumerate()
+					.filter(|&(n, v)| n >= 2 && v)
+					.map(|(n, _)| n as u64)
+					.collect::<Vec<_>>(),
 				cur: 0,
 			}
 		}
@@ -346,19 +334,24 @@ mod task8 {
 			*d -= '0' as u8;
 		}
 
-		let mut max_product = 1;
-		for v in digits.iter().take(num) {
-			max_product *= *v as u64;
-		}
+		let p1 = digits
+			.iter()
+			.cloned()
+			.take(num)
+			.map(|n| n as u64)
+			.product::<u64>();
 
-		for (i, _) in digits.iter().enumerate().skip(num) {
-			let mut product = 1;
-			for n in 0..num {
-				product *= digits[i - n] as u64;
-			}
-			max_product = max(max_product, product);
-		}
-		max_product
+		let p2 = digits
+			.iter()
+			.enumerate()
+			.skip(num)
+			.map(|(i, _)| (0..num)
+					.map(|n| digits[i - n] as u64)
+					.product::<u64>()
+			).max()
+			.unwrap();
+
+		max(p1, p2)
 	}
 
 	#[test]
@@ -406,11 +399,8 @@ mod task10 {
 	use task7::EratosfenPrimeGeneratorBelowN;
 
 	fn sum_primes_below(num: usize) -> u64 {
-		let mut sum = 0;
-		for p in EratosfenPrimeGeneratorBelowN::new(num) {
-			sum += p;
-		}
-		sum
+		EratosfenPrimeGeneratorBelowN::new(num)
+			.sum::<u64>()
 	}
 
 	#[test]
@@ -641,10 +631,11 @@ mod task13 {
 	use std::str::FromStr;
 
 	fn first_10_digits_of_sum(nums: &Vec<&str>) -> u64 {
-		let mut sum = 0u64;
-		for n in nums {
-			sum += <u64 as FromStr>::from_str(&n[0..17]).ok().unwrap();
-		}
+		let mut sum = nums
+			.iter()
+			.map(|s| <u64 as FromStr>::from_str(&s[0..17]).ok().unwrap())
+			.sum::<u64>();
+
 		let max = 10u64.pow(10) - 1;
 		while sum > max {
 			sum /= 10;
@@ -803,16 +794,9 @@ mod task14 {
 	}
 
 	fn longest_collatz_start(below: u64) -> u64 {
-		let mut max_val = 0;
-		let mut max_cnt = 0;
-		for i in 2..below {
-			let cnt = CollatzSequence::from(i).count();
-			if cnt > max_cnt {
-				max_cnt = cnt;
-				max_val = i;
-			}
-		}
-		max_val
+		(2..below)
+			.max_by(|i| CollatzSequence::from(*i).count())
+			.unwrap()
 	}
 
 	#[test]
@@ -969,11 +953,10 @@ mod task16 {
 	}
 
 	pub fn sum_digits(num: &str) -> u64 {
-		let mut sum = 0;
-		for c in num.as_bytes() {
-			sum += (c - '0' as u8) as u64;
-		}
-		sum
+		num
+			.as_bytes()
+			.iter()
+			.map(|c| (c - '0' as u8) as u64).sum::<u64>()
 	}
 
 	#[test]
@@ -1094,7 +1077,9 @@ mod task17 {
 	}
 
 	fn count_string_numbers_sum_len(from: u64, to: u64) -> usize {
-		(from..(to + 1)).map(count_string_number_len).sum()
+		(from..(to + 1))
+			.map(count_string_number_len)
+			.sum()
 	}
 
 	#[test]
@@ -1113,15 +1098,14 @@ mod task18 {
 	use std::collections::HashMap;
 
 	fn parse_triangle(data: &str) -> Vec<Vec<u64>> {
-		let mut res = Vec::new();
-		for line in data.lines() {
-			let mut v = Vec::new();
-			for word in line.split_whitespace() {
-				v.push(<u64 as FromStr>::from_str(word).ok().unwrap());
-			}
-			res.push(v);
-		}
-		res
+		data
+			.lines()
+			.map(|line| line
+				.split_whitespace()
+				.map(|word| <u64 as FromStr>::from_str(word).ok().unwrap())
+				.collect::<Vec<_>>()
+			)
+			.collect::<Vec<_>>()
 	}
 
 	fn largest_path_sum_impl(triangle: &Vec<Vec<u64>>, row: usize, column: usize) -> u64 {
@@ -1129,7 +1113,10 @@ mod task18 {
 		if row == triangle.len() - 1 {
 			num
 		} else {
-			num + max(largest_path_sum_impl(triangle, row + 1, column), largest_path_sum_impl(triangle, row + 1, column + 1))
+			num + max(
+				largest_path_sum_impl(triangle, row + 1, column),
+				largest_path_sum_impl(triangle, row + 1, column + 1)
+			)
 		}
 	}
 
@@ -1382,11 +1369,9 @@ mod task21 {
 	}
 
 	fn sum_amicable_numbers_under(max: u64) -> u64 {
-		let mut sum = 0;
-		for (i, j) in AmicableNumbers::new(max + 1) {
-			sum += i + j;
-		}
-		sum
+		AmicableNumbers::new(max + 1)
+			.map(|(i, j)| i + j)
+			.sum::<u64>()
 	}
 
 	#[test]
@@ -1400,13 +1385,20 @@ Just parse, soth and calculate.
 */
 mod task22 {
 	fn parse_names(names: &str) -> Vec<&str> {
-		let mut res = names.split(',').map(|n| unsafe { n.slice_unchecked(1, n.len() - 1) }).collect::<Vec<_>>();
+		let mut res = names
+			.split(',')
+			.map(|n| unsafe { n.slice_unchecked(1, n.len() - 1) })
+			.collect::<Vec<_>>();
+
 		res.sort();
 		res
 	}
 
 	fn calc_score(name: &str) -> u64 {
-		name.chars().map(|c| (c as u8 - 'A' as u8) as u64 + 1).sum::<u64>()
+		name
+			.chars()
+			.map(|c| (c as u8 - 'A' as u8) as u64 + 1)
+			.sum::<u64>()
 	}
 
 	fn calc_total_score(names: &Vec<&str>) -> u64 {
@@ -1633,7 +1625,9 @@ mod task26 {
 	use task16::pow;
 
 	fn is_1_div_n_terminating_decimal(n: u64) -> bool {
-		Factors::new(n).filter(|n| *n != 2 && *n != 5).count() == 0
+		Factors::new(n)
+			.filter(|n| *n != 2 && *n != 5)
+			.count() == 0
 	}
 
 	fn period_length_1_div_n_impl(n: u64, bigten: &BigUint, pows: &mut Vec<BigUint>) -> usize {
