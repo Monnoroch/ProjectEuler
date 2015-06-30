@@ -1677,3 +1677,55 @@ mod task26 {
 		// assert_eq!(num_with_largest_period_length(1000), 983);
 	}
 }
+
+/*
+Just loop over all possible polynoms, count primes from n == 0 and  find maximum.
+The only thing to consider is that b must be >= 2 to polynom generate a prime at n == 0.
+*/
+mod task27 {
+	use std::cmp::max;
+
+	fn is_prime(n: u64) -> bool {
+		!(2..((n as f64).sqrt().ceil() as u64))
+			.any(|i| n % i == 0)
+	}
+
+	fn is_prime_cached(n: u64, cache: &mut Vec<Option<bool>>) -> bool {
+		let sn = n as usize;
+		if sn >= cache.len() {
+			cache.resize(sn + 1, None);
+			// println!("resize: {:?}", cache.len());
+		}
+		if cache[sn] == None {
+			cache[sn] = Some(is_prime(n));
+		}
+		cache[sn].unwrap()
+	}
+
+	fn product_coefs_impl(mina: i64, maxa: i64, minb: i64, maxb: i64, cache: &mut Vec<Option<bool>>) -> i64 {
+		(mina..maxa)
+			.map(|i|
+				(max(2, minb)..maxb)
+					.map(|j| (i * j, (0..)
+							.map(|n| n * n + i * n + j)
+							.take_while(|&v| v > 1 && is_prime_cached(v as u64, cache))
+							.count()
+						)
+					)
+					.max_by(|&(_, cnt)| cnt)
+					.unwrap()
+			)
+			.max_by(|&(_, cnt)| cnt)
+			.unwrap()
+			.0
+	}
+
+	fn product_coefs(mina: i64, maxa: i64, minb: i64, maxb: i64) -> i64 {
+		product_coefs_impl(mina, maxa, minb, maxb, &mut Vec::new())
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(product_coefs(-999, 999, -999, 999), -59231);
+	}
+}
