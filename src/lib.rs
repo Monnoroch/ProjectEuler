@@ -946,9 +946,20 @@ Calculate result using big uint.
 */
 mod task16 {
 	use num::traits::FromPrimitive;
+	use num::traits::Zero;
+	use num::traits::One;
 	use num::bigint::BigUint;
 
-	fn pow(num: u64, pow: u64) -> BigUint {
+	pub fn pow(num: u64, pow: u64) -> BigUint {
+		if num == 0 {
+			let res = <BigUint as Zero>::zero();
+			return res;
+		}
+		if pow == 0 {
+			let res = <BigUint as One>::one();
+			return res;
+		}
+
 		let n = <BigUint as FromPrimitive>::from_u64(num).unwrap();
 		let mut res = n.clone();
 		for _ in 1..pow {
@@ -1606,5 +1617,69 @@ mod task25 {
 		assert_eq!(first_fib_with_n_digits(3), 12);
 		// takes too long for repeated tests running
 		// assert_eq!(first_fib_with_n_digits(1000), 4782);
+	}
+}
+
+/*
+Sequences links:
+https://oeis.org/A051626
+https://oeis.org/A003592
+*/
+mod task26 {
+	use num::traits::FromPrimitive;
+	use num::traits::ToPrimitive;
+	use num::bigint::BigUint;
+	use task3::Factors;
+	use task16::pow;
+
+	fn is_1_div_n_terminating_decimal(n: u64) -> bool {
+		Factors::new(n).filter(|n| *n != 2 && *n != 5).count() == 0
+	}
+
+	fn period_length_1_div_n_impl(n: u64, bigten: &BigUint, pows: &mut Vec<BigUint>) -> usize {
+		if is_1_div_n_terminating_decimal(n) {
+			return 0;
+		}
+
+		let bign = <BigUint as FromPrimitive>::from_u64(n).unwrap();
+		if pows.is_empty() {
+			pows.push(pow(10, 0));
+		}
+		for lpow in 1usize.. {
+			if lpow >= pows.len() {
+				let newpow = pows.last().unwrap() * bigten;
+				pows.push(newpow);
+			}
+			let lp = &pows[lpow];
+			for (mpow, mpv) in pows[..lpow].iter().enumerate().rev() {
+				if ((lp - mpv) % &bign).to_u64().unwrap() == 0 {
+					return lpow - mpow;
+				}
+			}
+		}
+		unreachable!();
+	}
+
+	fn period_length_1_div_n(n: u64) -> usize {
+		let bigten = <BigUint as FromPrimitive>::from_u64(10).unwrap();
+		period_length_1_div_n_impl(n, &bigten, &mut Vec::new())
+	}
+
+	fn num_with_largest_period_length(under: u64) -> u64 {
+		let bigten = <BigUint as FromPrimitive>::from_u64(10).unwrap();
+		let mut posw = Vec::new();
+		(3..under)
+			.map(|d| (d, period_length_1_div_n_impl(d as u64, &bigten, &mut posw)))
+			.max_by(|&(_, l)| l)
+			.unwrap()
+			.0
+	}
+
+
+	#[test]
+	fn test() {
+		assert_eq!(num_with_largest_period_length(100), 97);
+		// takes too long for repeated tests running
+		// assert_eq!(num_with_largest_period_length(1000), 983);
 	}
 }
