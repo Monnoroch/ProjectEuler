@@ -31,34 +31,37 @@ mod task1 {
 Implemented with fibonacci sequence iterator and simple loop with checks and summing.
 */
 mod task2 {
-	struct FibonacciSequence {
-		v1: u64,
-		v2: u64,
+	use num::traits::Zero;
+	use num::traits::One;
+	use std::ops::Add;
+	pub struct FibonacciSequence<T: Clone + Zero + One + Add<T>> {
+		v1: T,
+		v2: T,
 	}
 
-	impl FibonacciSequence {
-		fn new() -> FibonacciSequence {
+	impl<T: Clone + Zero + One + Add<T>> FibonacciSequence<T> {
+		pub fn new() -> FibonacciSequence<T> {
 			FibonacciSequence{
-				v1: 0,
-				v2: 1,
+				v1: <T as One>::one(),
+				v2: <T as Zero>::zero(),
 			}
 		}
 	}
 
-	impl Iterator for FibonacciSequence {
-		type Item = u64;
+	impl<T: Clone + Zero + One + Add<T>> Iterator for FibonacciSequence<T> {
+		type Item = T;
 
 		fn next(&mut self) -> Option<Self::Item> {
-			let res = self.v2 + self.v1;
-			self.v1 = self.v2;
-			self.v2 = res;
+			let res = self.v2.clone() + self.v1.clone();
+			self.v1 = self.v2.clone();
+			self.v2 = res.clone();
 			Some(res)
 		}
 	}
 
 	fn sum_even_fibs_below(below: u64) -> u64 {
 		let mut sum = 0;
-		for v in FibonacciSequence::new() {
+		for v in FibonacciSequence::<u64>::new() {
 			if v > below {
 				break;
 			}
@@ -1579,5 +1582,29 @@ mod task24 {
 	#[test]
 	fn test() {
 		assert_eq!(nth_permutation(10, 1000000), vec![2usize, 7, 8, 3, 9, 1, 5, 4, 6, 0]);
+	}
+}
+
+/*
+Used FibonacciSequence to find needed number.
+*/
+mod task25 {
+	use num::bigint::BigUint;
+	use task2::FibonacciSequence;
+
+	fn first_fib_with_n_digits(n: usize) -> usize {
+		for (i, v) in FibonacciSequence::<BigUint>::new().enumerate() {
+			if v.to_string().len() >= n {
+				return i + 1;
+			}
+		}
+		unreachable!();
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(first_fib_with_n_digits(3), 12);
+		// takes too long for repeated tests running
+		// assert_eq!(first_fib_with_n_digits(1000), 4782);
 	}
 }
