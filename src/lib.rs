@@ -1472,3 +1472,112 @@ mod task23 {
 		assert_eq!(sum_of_all_numbers_that_are_not_a_sum_of_two_abundant_numbers(), 4179871);
 	}
 }
+
+/*
+Implemented permutations generator.
+Sadly, it does not generate them lexicographically, so we sort them and then take n-th.
+*/
+mod task24 {
+	pub struct Permutations {
+		size: usize,
+		arr: Vec<usize>,
+		stack: Vec<(usize, usize, bool)>,
+	}
+
+	impl Permutations {
+		pub fn new(size: usize) -> Permutations {
+			Permutations{
+				size: size,
+				arr: (0..size).collect::<Vec<_>>(),
+				stack: vec![(0, 0, false)],
+			}
+		}
+	}
+
+	impl Iterator for Permutations {
+		type Item = Vec<usize>;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			while !self.stack.is_empty() {
+				let n: usize;
+				let i: usize;
+				let s: bool;
+				let iptr: *mut usize;
+				let sptr: *mut bool;
+				{
+					let mut back = self.stack.last_mut().unwrap();
+					n = back.0;
+					iptr = &mut back.1;
+					i = back.1;
+					sptr = &mut back.2;
+					s = back.2;
+				}
+				if n == self.arr.len() - 1 {
+					self.stack.pop();
+					return Some(self.arr.clone());
+				}
+
+				if i == 0 {
+					unsafe {
+						*iptr = n + 1;
+					}
+					self.stack.push((n + 1, 0, false));
+					continue;
+				}
+
+				if !s {
+					unsafe {
+						*sptr = true;
+					}
+					self.arr.swap(n, i);
+					self.stack.push((n + 1, 0, false));
+					continue;
+				} else {
+					self.arr.swap(n, i);
+					unsafe {
+						*iptr += 1;
+						*sptr = false;
+					}
+					if unsafe { *iptr } == self.arr.len() {
+						self.stack.pop();
+						continue;
+					}
+				}
+			}
+			None
+		}
+	}
+
+	fn permutations_fixed_start(n: usize, arr: &mut Vec<usize>) {
+		if n == arr.len() - 1 {
+			println!("1: {:?}", arr);
+			return;
+		}
+
+		permutations_fixed_start(n + 1, arr);
+		for i in (n + 1)..arr.len() {
+			arr.swap(n, i);
+			permutations_fixed_start(n + 1, arr);
+			arr.swap(n, i);
+		}
+	}
+
+	fn permutations_impl(arr: &mut Vec<usize>) {
+		permutations_fixed_start(0, arr)
+	}
+
+	fn permutations(size: usize) {
+		permutations_impl(&mut (0..size).collect::<Vec<_>>())
+	}
+
+	fn nth_permutation(size: usize, n: usize) -> Vec<usize> {
+		let mut perms = Permutations::new(size).collect::<Vec<_>>();
+		perms.sort();
+		perms[n - 1].clone()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(nth_permutation(10, 1000000), vec![2usize, 7, 8, 3, 9, 1, 5, 4, 6, 0]);
+	}
+}
