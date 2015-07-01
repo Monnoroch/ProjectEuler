@@ -1853,3 +1853,66 @@ mod task30 {
 		assert_eq!(digits_fifth_powers(10u64.pow(6), 5), 443839);
 	}
 }
+
+/*
+Take first coin, try to add another coin, that is less or equal to current.
+If you got the result -- there is a way! If more, than the result -- give up this path.
+If you try to add the bigger coin, you will get duplicate paths:
+50 + 100 + 50
+and
+50 + 50 + 100
+Which is bad.
+
+You can also cache results for pairs with the same partial sum AND the same available coin set.
+*/
+mod task31 {
+	use std::collections::HashMap;
+
+	fn conn_sums_count_ways_impl(coins: &[u64], sum: u64, partial: u64) -> usize {
+		if partial == sum {
+			1
+		} else if partial > sum {
+			0
+		} else {
+			coins
+				.iter()
+				.enumerate()
+				.rev()
+				.map(|(i, c)| conn_sums_count_ways_impl(&coins[0..(i + 1)], sum, c + partial))
+				.sum::<usize>()
+		}
+	}
+
+	fn conn_sums_count_ways_impl_cache(coins: &[u64], sum: u64, partial: u64, cache: &mut HashMap<(u64, usize), usize>) -> usize {
+		if partial == sum {
+			1
+		} else if partial > sum {
+			0
+		} else {
+			let tuple = (partial, coins.len());
+			match cache.get(&tuple) {
+				Some(v) => { return *v; },
+				None => {},
+			};
+
+			let res = coins
+				.iter()
+				.enumerate()
+				.rev()
+				.map(|(i, c)| conn_sums_count_ways_impl_cache(&coins[0..(i + 1)], sum, c + partial, cache))
+				.sum::<usize>();
+
+			cache.insert(tuple, res);
+			res
+		}
+	}
+
+	fn conn_sums_count_ways(coins: &[u64], sum: u64) -> usize {
+		conn_sums_count_ways_impl_cache(coins, sum, 0, &mut HashMap::new())
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(conn_sums_count_ways(&vec![1, 2, 5, 10, 20, 50, 100, 200].as_slice(), 200), 73682);
+	}
+}
