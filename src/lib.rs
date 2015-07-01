@@ -168,7 +168,7 @@ mod task5 {
 	use std::collections::HashMap;
 	use task3;
 
-	fn factorize_map(num: u64) -> HashMap<u64, u64> {
+	pub fn factorize_map(num: u64) -> HashMap<u64, u64> {
 		let mut map = HashMap::new();
 		for f in task3::Factors::new(num) {
 			let counter = map.entry(f).or_insert(0);
@@ -1757,5 +1757,50 @@ mod task28 {
 	fn test() {
 		assert_eq!(calc(5), 101);
 		assert_eq!(calc(1001), 669171001);
+	}
+}
+
+/*
+So, we factorize each number from 2 to N, then multiply degrees of all factors by power from 2 to N, those are representations of a^b.
+Then we just newwd to filter duplicates with hash set.
+*/
+mod task29 {
+	use std::collections::HashSet;
+	use std::collections::HashMap;
+	use task5::factorize_map;
+
+	#[derive(PartialEq, Eq, Hash)]
+	struct FactorizedNumber {
+		factors: Vec<(u64, u64)>,
+	}
+
+	impl FactorizedNumber {
+		fn new(factors: HashMap<u64, u64>, pow: u64) -> FactorizedNumber {
+			let mut res = FactorizedNumber{
+				factors: factors
+					.iter()
+					.map(|(&k, v)| (k, v * pow))
+					.collect::<Vec<_>>(),
+			};
+			res.factors.sort_by(|&(k1, _), &(k2, _)| k1.cmp(&k2));
+			res
+		}
+	}
+
+	fn distinct_powers(max: u64) -> usize {
+		let mut res = HashSet::new();
+		for a in 2..(max + 1) {
+			let factors = factorize_map(a);
+			for b in 2..(max + 1) {
+				res.insert(FactorizedNumber::new(factors.clone(), b));
+			}
+		}
+		res.len()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(distinct_powers(5), 15);
+		assert_eq!(distinct_powers(100), 9183);
 	}
 }
