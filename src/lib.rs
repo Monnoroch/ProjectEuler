@@ -1804,3 +1804,52 @@ mod task29 {
 		assert_eq!(distinct_powers(100), 9183);
 	}
 }
+
+/*
+This solution is very dimple, but has a major flaw:
+you need to specify higher boundary for the number.
+I'm sure, you can somehow find upper bound mathematically, but for now I'm too lazy.
+*/
+mod task30 {
+	pub struct Digits {
+		state: u64,
+	}
+
+	impl Digits {
+		pub fn new(n: u64) -> Digits {
+			Digits{
+				state: n,
+			}
+		}
+	}
+
+	impl Iterator for Digits {
+		type Item = u8;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			if self.state == 0 {
+				None
+			} else {
+				let res = (self.state % 10) as u8;
+				self.state /= 10;
+				Some(res)
+			}
+		}
+	}
+
+	fn digits_fifth_powers(max: u64, pow: u32) -> u64 {
+		let powers = (0..10u64)
+			.map(|n| n.pow(pow))
+			.collect::<Vec<_>>();
+
+		(10..(max + 1))
+			.filter(|n| *n == Digits::new(*n).map(|d| powers[d as usize]).sum::<u64>())
+			.sum::<u64>()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(digits_fifth_powers(10u64.pow(4), 4), 19316);
+		assert_eq!(digits_fifth_powers(10u64.pow(6), 5), 443839);
+	}
+}
