@@ -1729,3 +1729,33 @@ mod task27 {
 		assert_eq!(product_coefs(-999, 999, -999, 999), -59231);
 	}
 }
+
+/*
+Just iterate all numbers, increment layer as needed and sum cornered elements for each layer.
+*/
+mod task28 {
+	fn calc(size: usize) -> u64 {
+		let mut sum = 1;
+		let mut lasti = 1;
+		let mut cnt = 0;
+		let mut layer = 1;
+		for i in 2..(size*size + 1) {
+			if i - lasti == layer * 2 {
+				sum += i as u64;
+				lasti = i;
+				cnt += 1;
+				if cnt == 4 {
+					cnt = 0;
+					layer += 1;
+				}
+			}
+		}
+		sum
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(calc(5), 101);
+		assert_eq!(calc(1001), 669171001);
+	}
+}
