@@ -126,8 +126,7 @@ mod task3 {
 Iterate over all pairs of numbers and check if their product is a palindrome.
 */
 mod task4 {
-	fn is_palindrome(num: u64) -> bool {
-		let s = num.to_string().into_bytes();
+	pub fn is_palindrome<T: Eq>(s: &[T]) -> bool {
 		let l = s.len();
 		for i in 0..l/2 {
 			if s[i] != s[l - i - 1] {
@@ -137,13 +136,17 @@ mod task4 {
 		true
 	}
 
+	fn is_num_palindrome(num: u64) -> bool {
+		is_palindrome(num.to_string().as_bytes())
+	}
+
 	fn largest_palindrome_product(digits: u32) -> u64 {
 		let min = 10u64.pow(digits - 1);
 		let max = 10u64.pow(digits) - 1;
 		let mut res = vec![];
 		for i in (min..max).rev() {
 			for j in (min..max).rev() {
-				if is_palindrome(i * j) {
+				if is_num_palindrome(i * j) {
 					res.push(i * j);
 				}
 			}
@@ -223,6 +226,8 @@ mod task6 {
 Implemented with eratosfen iterator (optionally eratosfen up to N iterator).
 */
 mod task7 {
+	use std::collections::BitVec;
+
 	pub struct EratosfenPrimeGenerator {
 		primes: Vec<u64>,
 		current: u64,
@@ -262,20 +267,9 @@ mod task7 {
 	}
 
 	impl EratosfenPrimeGeneratorBelowN {
-		pub fn new(num: usize) -> EratosfenPrimeGeneratorBelowN {
-			let mut numbers = (0..num).map(|_| true).collect::<Vec<_>>();
-			for n in 2..num {
-				let mut stop = true;
-				for i in (n*2..num).step_by(n) {
-					numbers[i] = false;
-					stop = false;
-				}
-				if stop {
-					break;
-				}
-			}
+		pub fn new(num: u64) -> EratosfenPrimeGeneratorBelowN {
 			EratosfenPrimeGeneratorBelowN{
-				primes: numbers
+				primes: Self::numbers(num)
 					.iter()
 					.cloned()
 					.enumerate()
@@ -284,6 +278,38 @@ mod task7 {
 					.collect::<Vec<_>>(),
 				cur: 0,
 			}
+		}
+
+		pub fn new_with_numbers(num: u64) -> (EratosfenPrimeGeneratorBelowN, BitVec) {
+			let numbers = Self::numbers(num);
+			(EratosfenPrimeGeneratorBelowN{
+				primes: numbers
+					.iter()
+					.cloned()
+					.enumerate()
+					.filter(|&(n, v)| n >= 2 && v)
+					.map(|(n, _)| n as u64)
+					.collect::<Vec<_>>(),
+				cur: 0,
+			}, numbers.iter().cloned().collect::<BitVec>())
+		}
+
+		fn numbers(num: u64) -> Vec<bool> {
+			let nm = num as usize;
+			let mut numbers = (0..nm).map(|_| true).collect::<Vec<_>>();
+			numbers[0] = false;
+			numbers[1] = false;
+			for n in 2..nm {
+				let mut stop = true;
+				for i in (n*2..nm).step_by(n) {
+					numbers[i] = false;
+					stop = false;
+				}
+				if stop {
+					break;
+				}
+			}
+			numbers
 		}
 	}
 
@@ -398,9 +424,9 @@ Infinet eratosfen iteratir is too slow for that problem.
 mod task10 {
 	use task7::EratosfenPrimeGeneratorBelowN;
 
-	fn sum_primes_below(num: usize) -> u64 {
+	fn sum_primes_below(num: u64) -> u64 {
 		EratosfenPrimeGeneratorBelowN::new(num)
-			.sum::<u64>()
+			.sum()
 	}
 
 	#[test]
@@ -1683,8 +1709,8 @@ The only thing to consider is that b must be >= 2 to polynom generate a prime at
 mod task27 {
 	use std::cmp::max;
 
-	fn is_prime(n: u64) -> bool {
-		!(2..((n as f64).sqrt().ceil() as u64))
+	pub fn is_prime(n: u64) -> bool {
+		n > 1 && !(2..((n as f64).sqrt().ceil() as u64))
 			.any(|i| n % i == 0)
 	}
 
@@ -1809,6 +1835,7 @@ you need to specify higher boundary for the number.
 I'm sure, you can somehow find upper bound mathematically, but for now I'm too lazy.
 */
 mod task30 {
+	#[derive(Clone)]
 	pub struct Digits {
 		state: u64,
 		base: u64,
@@ -2014,7 +2041,6 @@ mod task33 {
 	}
 }
 
-
 /*
 Just check each number.
 I cheated a little bit by not automatically finding max number like that.
@@ -2035,5 +2061,183 @@ mod task34 {
 	#[test]
 	fn test() {
 		assert_eq!(sum_numbers_equal_sum_digit_factorials(1000000), 40730);
+	}
+}
+
+/*
+Generate all primes below N, iterate over circular numbers, check if they're primes.
+Checking is easy, because we already have the datastructure number -> is_prime.
+*/
+mod task35 {
+	use std::collections::BitVec;
+	use task7::EratosfenPrimeGeneratorBelowN;
+	use task27::{self};
+	use task30::Digits;
+
+	pub fn from_digits_iter<T: Iterator<Item=u64>>(it: T) -> u64 {
+		let mut res = 0;
+		let mut mul = 1;
+		for d in it {
+			res += d * mul;
+			mul *= 10;
+		}
+		res as u64
+	}
+
+	pub struct Circular {
+		digits: Vec<u8>,
+		n: usize,
+	}
+
+	impl Circular {
+		pub fn new(n: u64) -> Circular {
+			Circular{
+				digits: Digits::new(n, 10).collect(),
+				n: 0,
+			}
+		}
+	}
+
+	impl Iterator for Circular {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			let count = self.digits.len();
+			if self.n == count {
+				return None;
+			}
+			let n = self.n;
+			self.n += 1;
+			Some(from_digits_iter(
+				self.digits
+					.iter()
+					.cycle()
+					.skip(n)
+					.take(count)
+					.map(|c| *c as u64)
+			))
+		}
+	}
+
+
+	pub fn is_prime(n: u64, primes: &BitVec) -> bool {
+		if (n as usize) < primes.len() {
+			primes.get(n as usize).unwrap()
+		} else {
+			task27::is_prime(n)
+		}
+	}
+
+	fn is_circular_prime(n: u64, primes: &BitVec) -> bool {
+		Circular::new(n)
+			.all(|v| is_prime(v, primes))
+	}
+
+	fn count_circular_primes(max: u64) -> usize {
+		let (primes, numbers) = EratosfenPrimeGeneratorBelowN::new_with_numbers(max);
+		primes
+			.filter(|p| is_circular_prime(*p, &numbers))
+			.count()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(count_circular_primes(100), 13);
+		assert_eq!(count_circular_primes(1000000), 55);
+	}
+}
+
+/*
+Just check all numbers.
+*/
+mod task36 {
+	use task4::is_palindrome;
+	use task30::Digits;
+
+	fn is_num_palindrome(n: u64) -> bool {
+		is_palindrome(Digits::new(n, 10).collect::<Vec<_>>().as_slice()) && is_palindrome(Digits::new(n, 2).collect::<Vec<_>>().as_slice())
+	}
+
+	fn sum_palindromes(max: u64) -> u64 {
+		(1u64..max)
+			.filter(|n| is_num_palindrome(*n))
+			.sum()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(sum_palindromes(1000000), 872187);
+	}
+}
+
+/*
+I cheated a bit agan: assumed that all those numbers are under some N instead of calculating N myself.
+I could use EratosfenPrimeGenerator and not make this assumption, but then I woud had to cache myself instead of getting BitVec fo free.
+Totally doable, though.
+*/
+mod task37 {
+	use std::collections::BitVec;
+	use task7::EratosfenPrimeGeneratorBelowN;
+	use task30::Digits;
+	use task35::{is_prime, from_digits_iter};
+
+	pub struct Truncations {
+		digits: Vec<u8>,
+		n: usize,
+	}
+
+	impl Truncations {
+		pub fn new(n: u64) -> Truncations {
+			Truncations{
+				digits: Digits::new(n, 10).collect(),
+				n: 1,
+			}
+		}
+	}
+
+	impl Iterator for Truncations {
+		type Item = u64;
+
+		fn next(&mut self) -> Option<Self::Item> {
+			let count = self.digits.len();
+			if self.n == 2 * count {
+				return None;
+			}
+
+			let n = self.n;
+			self.n += 1;
+			if n < count {
+				Some(from_digits_iter(
+					self.digits
+						.iter()
+						.take(n)
+						.map(|c| *c as u64)
+				))
+			} else {
+				Some(from_digits_iter(
+					self.digits
+						.iter()
+						.skip(n - count)
+						.map(|c| *c as u64)
+				))
+			}
+		}
+	}
+
+	fn is_truncable(n: u64, primes: &BitVec) -> bool {
+		Truncations::new(n).all(|v| is_prime(v, primes))
+	}
+
+	fn sum_truncable_primes(max: u64) -> u64 {
+		let (primes, numbers) = EratosfenPrimeGeneratorBelowN::new_with_numbers(max);
+		primes
+			.filter(|&p| p >= 10 && is_truncable(p, &numbers))
+			.take(11)
+			.sum()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(sum_truncable_primes(1000000), 748317);
 	}
 }
