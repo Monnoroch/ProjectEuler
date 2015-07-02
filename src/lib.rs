@@ -1554,26 +1554,24 @@ mod task24 {
 		}
 	}
 
-	fn permutations_fixed_start(n: usize, arr: &mut Vec<usize>) {
+	fn permutations_fixed_start<F>(n: usize, arr: &mut Vec<usize>, f: &mut F) where F: FnMut(&Vec<usize>) {
 		if n == arr.len() - 1 {
-			println!("1: {:?}", arr);
+			f(arr);
 			return;
 		}
 
-		permutations_fixed_start(n + 1, arr);
+		permutations_fixed_start(n + 1, arr, f);
 		for i in (n + 1)..arr.len() {
 			arr.swap(n, i);
-			permutations_fixed_start(n + 1, arr);
+			permutations_fixed_start(n + 1, arr, f);
 			arr.swap(n, i);
 		}
 	}
 
-	fn permutations_impl(arr: &mut Vec<usize>) {
-		permutations_fixed_start(0, arr)
-	}
-
-	fn permutations(size: usize) {
-		permutations_impl(&mut (0..size).collect::<Vec<_>>())
+	pub fn permutations<F>(arr: Vec<usize>, f: F) where F: FnMut(&Vec<usize>) {
+		let mut ff = f;
+		let mut a = arr;
+		permutations_fixed_start(0, &mut a, &mut ff)
 	}
 
 	fn nth_permutation(size: usize, n: usize) -> Vec<usize> {
@@ -1914,5 +1912,58 @@ mod task31 {
 	#[test]
 	fn test() {
 		assert_eq!(conn_sums_count_ways(&vec![1, 2, 5, 10, 20, 50, 100, 200].as_slice(), 200), 73682);
+	}
+}
+
+/*
+When you multiply n-digit and k-digit number you get either (n+k)-digit or (n+k-1) digit number.
+So,
+9 - (n + k) == (n + k)
+or
+9 - (n + k) == (n + k - 1)
+
+The only solution is:
+n + k == 5.
+So, if the first number has n digits, then the second has 5 - n, therefore n also < 5.
+So, for each permutation of 123456789 we iterate slices of this permutation,
+when first one is of n = 1..5 elements, and second one is of 5 - n elements, and third one is of 9 - n - (5 - n) == 4 elements,
+and just check those.
+*/
+mod task32 {
+	use std::collections::HashSet;
+	use task24::permutations;
+
+	fn from_digits(arr: &[usize]) -> u64 {
+		let mut res = 0;
+		let mut mul = 1;
+		for d in arr.iter().rev() {
+			res += d * mul;
+			mul *= 10;
+		}
+		res as u64
+	}
+
+	fn pandigital_products_sum() -> u64 {
+		let mut res = HashSet::new();
+		permutations((1..10).collect::<Vec<_>>(), |perm| {
+			for j in 1..5 {
+				let (v1, tmp) = perm.split_at(j);
+				let (v2, v3) = tmp.split_at(5 - j);
+				let n1 = from_digits(v1);
+				let n2 = from_digits(v2);
+				let n3 = from_digits(v3);
+				if n1 * n2 == n3 {
+					res.insert(n3 as u64);
+				}
+			}
+		});
+		res
+			.iter()
+			.sum()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(pandigital_products_sum(), 45228);
 	}
 }
