@@ -2013,3 +2013,27 @@ mod task33 {
 		assert_eq!(bad_fractions_product_denominator(), 100);
 	}
 }
+
+
+/*
+Just check each number.
+I cheated a little bit by not automatically finding max number like that.
+*/
+mod task34 {
+	use task30::Digits;
+
+	fn factorial(num: u64) -> u64 {
+		(2..(num + 1)).product()
+	}
+
+	fn sum_numbers_equal_sum_digit_factorials(max: u64) -> u64 {
+		(3..max)
+			.filter(|i| Digits::new(*i, 10).map(|d| factorial(d as u64)).sum::<u64>() == *i)
+			.sum::<u64>()
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(sum_numbers_equal_sum_digit_factorials(1000000), 40730);
+	}
+}
