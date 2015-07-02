@@ -1811,12 +1811,14 @@ I'm sure, you can somehow find upper bound mathematically, but for now I'm too l
 mod task30 {
 	pub struct Digits {
 		state: u64,
+		base: u64,
 	}
 
 	impl Digits {
-		pub fn new(n: u64) -> Digits {
+		pub fn new(n: u64, b: u64) -> Digits {
 			Digits{
 				state: n,
+				base: b,
 			}
 		}
 	}
@@ -1828,8 +1830,8 @@ mod task30 {
 			if self.state == 0 {
 				None
 			} else {
-				let res = (self.state % 10) as u8;
-				self.state /= 10;
+				let res = (self.state % self.base) as u8;
+				self.state /= self.base;
 				Some(res)
 			}
 		}
@@ -1841,7 +1843,7 @@ mod task30 {
 			.collect::<Vec<_>>();
 
 		(10..(max + 1))
-			.filter(|n| *n == Digits::new(*n).map(|d| powers[d as usize]).sum::<u64>())
+			.filter(|n| *n == Digits::new(*n, 10).map(|d| powers[d as usize]).sum::<u64>())
 			.sum::<u64>()
 	}
 
@@ -1965,5 +1967,49 @@ mod task32 {
 	#[test]
 	fn test() {
 		assert_eq!(pandigital_products_sum(), 45228);
+	}
+}
+
+/*
+Iterate over all pairs, find common digit, if not zero, check if wrong answer is the same as right one,
+multiply numerator and denominator separately, then divide denominator for all factors of numerator if factor divides it.
+*/
+mod task33 {
+	use std::collections::HashSet;
+	use task3::Factors;
+	use task30::Digits;
+
+	fn bad_fractions_product_denominator() -> u64 {
+		let mut dproduct = 1;
+		let mut nproduct = 1;
+		for d in 11..99 {
+			let ddigits = Digits::new(d, 10).collect::<HashSet<_>>();
+			for n in 10..d {
+				let common = ddigits
+					.intersection(&Digits::new(n, 10).collect())
+					.sum::<u8>();
+
+				if common != 0 {
+					let badn = Digits::new(n, 10).filter(|v| *v != common).sum::<u8>() as u64;
+					let badd = Digits::new(d, 10).filter(|v| *v != common).sum::<u8>() as u64;
+					if badn != 0 && badd != 0 && n * badd == d * badn {
+						dproduct *= d;
+						nproduct *= n;
+					}
+				}
+			}
+		}
+		for f in Factors::new(nproduct) {
+			if dproduct % f == 0 {
+				dproduct /= f;
+				nproduct /= f;
+			}
+		}
+		dproduct
+	}
+
+	#[test]
+	fn test() {
+		assert_eq!(bad_fractions_product_denominator(), 100);
 	}
 }
